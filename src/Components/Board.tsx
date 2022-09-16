@@ -1,14 +1,7 @@
-import {useState} from "react";
+import React, {useState} from "react";
+import {FieldData} from "../FieldData";
+import {Cell} from "./Cell";
 
-type FieldData = {
-    x: number,
-    y: number,
-    isMine: boolean,
-    neighbours: number,
-    isRevealed: boolean
-    isEmpty: boolean,
-    isFlagged: boolean
-}
 
 export const Board = (props:{
     mines:number,
@@ -20,6 +13,19 @@ export const Board = (props:{
     const [mineCount, setMineCount] = useState(props.mines);
 
 
+    const handleContext = (e : React.MouseEvent<HTMLButtonElement, MouseEvent>, field: FieldData) => {
+        e.preventDefault();
+        let updatedData = [...boardData];
+        updatedData[field.x][field.y].isFlagged = true;
+
+        setBoardData(updatedData);
+        return false;
+    }
+
+    const handleClick = (field: FieldData) => {
+
+    }
+
     return(
 
         <div>
@@ -29,7 +35,7 @@ export const Board = (props:{
                         {rows.map(item =>{
 
                     return(
-                        <button style={{padding: "10px 24px"}}>{item.isMine ? "💣" : (item.neighbours === 0 ? "-" : item.neighbours)}</button>
+                        <Cell fieldData={item} onClick={handleClick} onContext={handleContext}></Cell>
                     )
                 })}
                         <br/>
@@ -61,8 +67,6 @@ const initBoardData = (width:number, height:number, mines:number) => {
                 isEmpty: false,
                 isFlagged: false,
             };
-
-            //console.log(data[i]);
         }
     }
     console.log("Finished creating basic board");
@@ -134,3 +138,4 @@ const calcNeighbours = (data: FieldData[][], height: number, width: number) => {
     });
     return data;
 }
+
