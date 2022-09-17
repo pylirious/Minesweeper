@@ -23,27 +23,45 @@ export const Board = (props:{
     }
 
     const handleClick = (field: FieldData) => {
+        let updatedData = [...boardData];
+        updatedData[field.x][field.y].isRevealed = true;
 
+        setBoardData(updatedData);
     }
 
     return(
-
-        <div>
+        <div style={{
+            border: "30px solid white",
+            borderRightColor: "gray",
+            borderBottomColor: "gray"
+        }}>
+        <div style={{
+            border: "10px solid",
+            borderTopColor: "gray",
+            borderLeftColor: "gray",
+            borderBottomColor: "white",
+            borderRightColor: "white",
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
+            outline: "20px solid lightgray",
+        }}>
             {boardData.map(rows =>{
                 return(
-                    <div>
+                    <div >
                         {rows.map(item =>{
 
                     return(
                         <Cell fieldData={item} onClick={handleClick} onContext={handleContext}></Cell>
                     )
                 })}
-                        <br/>
+
                     </div>
 
                 )
             })}
             <br/>
+        </div>
         </div>
 
     );
