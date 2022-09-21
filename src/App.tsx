@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <Board mines={10} height={10} width={10}/>
+        <Board mines={40} height={16} width={16}/>
       </header>
 
     </div>

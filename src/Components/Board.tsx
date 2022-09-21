@@ -1,81 +1,141 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {FieldData} from "../FieldData";
 import {Cell} from "./Cell";
 
 
-export const Board = (props:{
-    mines:number,
-    width:number,
-    height:number
-}) =>{
+export const Board = (props: {
+    mines: number,
+    width: number,
+    height: number
+}) => {
 
     const [boardData, setBoardData] = useState(() => initBoardData(props.width, props.height, props.mines));
-    const [mineCount, setMineCount] = useState(props.mines);
+    const [gameOver, setGameOver] = useState(false);
+    const [timer, setTimer] = useState(0);
 
+    let startTime: number;
 
-    const handleContext = (e : React.MouseEvent<HTMLButtonElement, MouseEvent>, field: FieldData) => {
+    useEffect(() => {
+        startTime = Date.now();
+        const timer = setInterval(() => { // Creates an interval which will update the current data every minute
+            // This will trigger a rerender every component that uses the useDate hook.
+            setTimer(Date.now() - startTime);
+        }, 1000);
+        return () => {
+            clearInterval(timer); // Return a funtion to clear the timer so that it will stop being called on unmount
+        }
+    }, []);
+
+    const handleContext = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, field: FieldData) => {
         e.preventDefault();
+        if (gameOver) {
+            return;
+        }
+
         let updatedData = [...boardData];
-        updatedData[field.x][field.y].isFlagged = true;
+        updatedData[field.x][field.y].isFlagged = !updatedData[field.x][field.y].isFlagged;
 
         setBoardData(updatedData);
         return false;
     }
 
-    const handleClick = (field: FieldData) => {
+    const handleClick = (field: FieldData, manual: boolean) => {
+        if (gameOver) {
+            return;
+        }
+
         let updatedData = [...boardData];
+        if (updatedData[field.x][field.y].isRevealed) {
+            if (manual) {
+                console.log("Manual!!!");
+                let flags = 0
+                let neighbour = traverseField(updatedData, field.x, field.y, props.height, props.width);
+                neighbour.forEach(n => {
+                    if (n.isFlagged)
+                        flags++;
+                })
+                if (flags >= updatedData[field.x][field.y].neighbours) {
+                    neighbour.forEach(n => handleClick(n, false))
+                }
+            }
+            return;
+
+        }
+        if (updatedData[field.x][field.y].isFlagged) {
+            return;
+        }
         updatedData[field.x][field.y].isRevealed = true;
+
+        if (updatedData[field.x][field.y].isMine) {
+            setGameOver(true);
+        }
+
+        if (updatedData[field.x][field.y].neighbours === 0) {
+            traverseField(updatedData, field.x, field.y, props.height, props.width).forEach(n => {
+                handleClick(n, false);
+            })
+        }
 
         setBoardData(updatedData);
     }
 
-    return(
+    return (
         <div style={{
-            border: "30px solid white",
-            borderRightColor: "gray",
-            borderBottomColor: "gray"
+            transform: `scale(${10 / props.height}, ${10 / props.height})`,
         }}>
-        <div style={{
-            border: "10px solid",
-            borderTopColor: "gray",
-            borderLeftColor: "gray",
-            borderBottomColor: "white",
-            borderRightColor: "white",
-            display: "flex",
-            flexDirection: "row",
-            flexWrap: "wrap",
-            outline: "20px solid lightgray",
-        }}>
-            {boardData.map(rows =>{
-                return(
-                    <div >
-                        {rows.map(item =>{
+            <div style={{
+                border: "30px solid white",
+                borderRightColor: "gray",
+                borderBottomColor: "gray",
+            }}>
+                <div style={{
+                    border: "10px solid",
+                    borderTopColor: "gray",
+                    borderLeftColor: "gray",
+                    borderBottomColor: "white",
+                    borderRightColor: "white",
+                    display: "grid",
+                    gridTemplateRows: `repeat(${props.height}, minmax(0, 1fr));`,
+                    gridTemplateColumns: `repeat(${props.width}, minmax(0, 1fr));`,
+                    gridAutoFlow: "column",
 
-                    return(
-                        <Cell fieldData={item} onClick={handleClick} onContext={handleContext}></Cell>
-                    )
-                })}
+                    outline: "20px solid lightgray",
+                }}>
+                    {boardData.map(rows => {
+                        return (
+                            <div>
+                                {rows.map(item => {
 
-                    </div>
+                                    return (
+                                        <Cell fieldData={item} onClick={handleClick} onContext={handleContext} gameOver={gameOver}/>
+                                    )
+                                })}
 
-                )
-            })}
-            <br/>
+                            </div>
+
+                        )
+                    })}
+                    <br/>
+                </div>
+            </div>
+            <span>
+                {gameOver ? "GAME OVER" : "Time: " + Math.trunc(timer / 1000)}
+            </span>
         </div>
-        </div>
+
 
     );
-    
-    
+
+
 }
-const initBoardData = (width:number, height:number, mines:number) => {
+const initBoardData = (width: number, height: number, mines: number) => {
 
     console.warn("Initiating Board");
-    let data:FieldData[][] = [];
+    let data: FieldData[][] = [];
 
-    for(let i = 0; i < height; i++) {
+    for (let i = 0; i < width; i++) {
         data.push([]);
-        for (let g = 0; g < width; g++) {
+        for (let g = 0; g < height; g++) {
             data[i][g] = {
                 x: i,
                 y: g,
@@ -97,10 +157,10 @@ const initBoardData = (width:number, height:number, mines:number) => {
 }
 const placeMines = (data: FieldData[][], mineSum: number, height: number, width: number) => {
     let minesPlanted = 0;
-    while(minesPlanted < mineSum){
+    while (minesPlanted < mineSum) {
         let ranX = Math.trunc(Math.random() * width);
         let ranY = Math.trunc(Math.random() * height);
-        if(!(data[ranX][ranY].isMine)){
+        if (!(data[ranX][ranY].isMine)) {
             data[ranX][ranY].isMine = true;
             minesPlanted++;
         }
@@ -109,40 +169,48 @@ const placeMines = (data: FieldData[][], mineSum: number, height: number, width:
 }
 
 const getMines = (data: FieldData[][]) => {
-    let mineArray : FieldData[] = [];
+    let mineArray: FieldData[] = [];
     data.forEach(rows => rows.forEach(
         item => {
-            if(item.isMine){
+            if (item.isMine) {
                 mineArray.push(item);
             }
         }
-
     ));
     return mineArray;
 }
 
 const traverseField = (data: FieldData[][], x: number, y: number, height: number, width: number) => {
+    if(x === 0){
+        console.log(`Mine at: x${x} y${y}`);
+    }
     let neighbours: FieldData[] = [];
 
-    if(x > 0){
-        neighbours.push(data[x-1][y]);
-        if(y > 0){
-            neighbours.push(data[x-1][y-1]);
-            neighbours.push(data[x][y-1]);
+    if (x > 0) {
+        neighbours.push(data[x - 1][y]);
+        if (y > 0) {
+            neighbours.push(data[x - 1][y - 1]);
+            //neighbours.push(data[x][y - 1]);
         }
-        if(y < height - 1){
-            neighbours.push(data[x-1][y+1]);
-            neighbours.push(data[x][y+1]);
+        if (y < height - 1) {
+            neighbours.push(data[x - 1][y + 1]);
+            //neighbours.push(data[x][y + 1]);
         }
     }
-    if(x < width - 1){
-        neighbours.push(data[x+1][y]);
-        if(y > 0){
-            neighbours.push(data[x+1][y-1]);
+    if (x < width - 1) {
+        neighbours.push(data[x + 1][y]);
+        if (y > 0) {
+            neighbours.push(data[x + 1][y - 1]);
         }
-        if(y < height -1){
-            neighbours.push(data[x+1][y+1]);
+        if (y < height - 1) {
+            neighbours.push(data[x + 1][y + 1]);
         }
+    }
+    if(y < height - 1){
+        neighbours.push(data[x][y + 1]);
+    }
+    if(y > 0){
+        neighbours.push(data[x][y - 1]);
     }
 
     return neighbours;
