@@ -12,7 +12,7 @@ code {
     monospace;
 }
 .cell{
-  border: 6px solid white;
+  border: 3px solid white;
   border-right-color: gray;
   border-bottom-color: gray;
   background: lightgrey;
@@ -22,14 +22,13 @@ code {
   width: 34px;
   cursor: pointer;
   color: #282c34;
+
 }
 
 .cell#revealed{
-  border-color: gray;
-  border-right-color: white;
-  border-bottom-color: white;
+  border-color: darkgray;
   font-weight: bold;
-  background-color: #c5c5c5;
+  background-color: lightgrey;
 }
 
 
