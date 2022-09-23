@@ -30,11 +30,11 @@ export const Board = (props: {
 
     const handleContext = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, field: FieldData) => {
         e.preventDefault();
-        if (gameOver) {
+        let updatedData = [...boardData];
+        if (gameOver || updatedData[field.x][field.y].isRevealed) {
             return;
         }
 
-        let updatedData = [...boardData];
         updatedData[field.x][field.y].isFlagged = !updatedData[field.x][field.y].isFlagged;
 
         setBoardData(updatedData);
