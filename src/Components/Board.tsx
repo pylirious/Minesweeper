@@ -12,6 +12,8 @@ export const Board = (props: {
     const [boardData, setBoardData] = useState(() => initBoardData(props.width, props.height, props.mines));
     const [gameOver, setGameOver] = useState(false);
     const [timer, setTimer] = useState(0);
+    const [endTime, setEndTime] = useState(0);
+    const [revealed, setRevealed] = useState(0);
 
     let startTime: number;
 
@@ -44,8 +46,38 @@ export const Board = (props: {
             return;
         }
 
+
         let updatedData = [...boardData];
-        if (updatedData[field.x][field.y].isRevealed) {
+
+        if (updatedData[field.x][field.y].isFlagged) {
+            return;
+        }
+        if (!updatedData[field.x][field.y].isRevealed){
+            updatedData[field.x][field.y].isRevealed = true;
+
+            if (updatedData[field.x][field.y].isMine) {
+                setEndTime(timer);
+                setGameOver(true);
+                return;
+            }
+
+            setRevealed(revealed +1);
+            console.log(revealed);
+            if (revealed >= (props.width * props.height) - props.mines) {
+                alert("You Won!");
+                setEndTime(timer);
+                setGameOver(true);
+            }
+
+            if (updatedData[field.x][field.y].neighbours === 0) {
+                traverseField(updatedData, field.x, field.y, props.height, props.width).forEach(n => {
+                    handleClick(n, false);
+                })
+            }
+
+            setBoardData(updatedData);
+        }
+        else {
             if (manual) {
                 console.log("Manual!!!");
                 let flags = 0
@@ -61,22 +93,8 @@ export const Board = (props: {
             return;
 
         }
-        if (updatedData[field.x][field.y].isFlagged) {
-            return;
-        }
-        updatedData[field.x][field.y].isRevealed = true;
 
-        if (updatedData[field.x][field.y].isMine) {
-            setGameOver(true);
-        }
 
-        if (updatedData[field.x][field.y].neighbours === 0) {
-            traverseField(updatedData, field.x, field.y, props.height, props.width).forEach(n => {
-                handleClick(n, false);
-            })
-        }
-
-        setBoardData(updatedData);
     }
 
     return (
@@ -107,7 +125,8 @@ export const Board = (props: {
                                 {rows.map(item => {
 
                                     return (
-                                        <Cell fieldData={item} onClick={handleClick} onContext={handleContext} gameOver={gameOver}/>
+                                        <Cell fieldData={item} onClick={handleClick} onContext={handleContext}
+                                              gameOver={gameOver}/>
                                     )
                                 })}
 
@@ -119,7 +138,8 @@ export const Board = (props: {
                 </div>
             </div>
             <span>
-                {gameOver ? "GAME OVER" : "Time: " + Math.trunc(timer / 1000)}
+                {gameOver ? `GAME OVER | Time: ${Math.trunc(endTime / 1000)}` : "Time: " + Math.trunc(timer / 1000)}
+
             </span>
         </div>
 
@@ -181,7 +201,7 @@ const getMines = (data: FieldData[][]) => {
 }
 
 const traverseField = (data: FieldData[][], x: number, y: number, height: number, width: number) => {
-    if(x === 0){
+    if (x === 0) {
         console.log(`Mine at: x${x} y${y}`);
     }
     let neighbours: FieldData[] = [];
@@ -206,10 +226,10 @@ const traverseField = (data: FieldData[][], x: number, y: number, height: number
             neighbours.push(data[x + 1][y + 1]);
         }
     }
-    if(y < height - 1){
+    if (y < height - 1) {
         neighbours.push(data[x][y + 1]);
     }
-    if(y > 0){
+    if (y > 0) {
         neighbours.push(data[x][y - 1]);
     }
 
